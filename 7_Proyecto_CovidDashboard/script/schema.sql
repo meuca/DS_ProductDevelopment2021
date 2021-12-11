@@ -1,0 +1,29 @@
+CREATE TABLE IF NOT EXISTS dash.deaths(
+PROVINCE_STATE text,
+COUNTRY_REGION text,
+LATITUDE float,
+LONGITUDE float,
+ACUMULATED int,
+DATE date,
+DELTA int
+);
+
+CREATE TABLE IF NOT EXISTS dash.recovered(
+PROVINCE_STATE text,
+COUNTRY_REGION text,
+LATITUDE float,
+LONGITUDE float,
+ACUMULATED int,
+DATE date,
+DELTA int
+);
+
+CREATE TABLE IF NOT EXISTS dash.confirmed(
+PROVINCE_STATE text,
+COUNTRY_REGION text,
+LATITUDE float,
+LONGITUDE float,
+ACUMULATED int,
+DATE date,
+DELTA int
+);
