@@ -32,12 +32,14 @@ df_fallecidos = pullData(config['queries']['pullDeaths'])
 @st.cache
 def load_data(file, metric):
     data = file
-    data['coordinates'] = data[['LONGITUDE', 'LATITUDE']].values.tolist()
-    data['PROVINCE_STATE'] = data['PROVINCE_STATE'].fillna(data['COUNTRY_REGION'])
-    data['CountryRegion'] = data['PROVINCE_STATE']
-    data['CountryRegion'] = data.apply(lambda x: x['COUNTRY_REGION'] if x['COUNTRY_REGION'] == 'Canada' else x['CountryRegion'], axis=1)
-    data['CountryRegion'] = data.apply(lambda x: x['COUNTRY_REGION'] if x['COUNTRY_REGION'] == 'Australia' else x['CountryRegion'], axis=1)
-    data['CountryRegion'] = data.apply(lambda x: x['COUNTRY_REGION'] if x['COUNTRY_REGION'] == 'China' else x['CountryRegion'], axis=1)
+    data = data.rename(columns={'PROVINCE_STATE':'Province/State','COUNTRY_REGION':'Country/Region','LATITUDE':'Lat','LONGITUDE':'Long','ACUMULATED':'Acumulado','DATE':'Date','DELTA':'Delta'})
+    data['coordinates'] = data[['Long', 'Lat']].values.tolist()
+    #data['Province/State'] = data['Province/State'].fillna(data['Country/Region'])
+    data['Province/State'] = data.apply(lambda x: x['Country/Region'] if x['Province/State'] == '' else x['Province/State'], axis=1)
+    data['CountryRegion'] = data['Province/State']
+    data['CountryRegion'] = data.apply(lambda x: x['Country/Region'] if x['Country/Region'] == 'Canada' else x['CountryRegion'], axis=1)
+    data['CountryRegion'] = data.apply(lambda x: x['Country/Region'] if x['Country/Region'] == 'Australia' else x['CountryRegion'], axis=1)
+    data['CountryRegion'] = data.apply(lambda x: x['Country/Region'] if x['Country/Region'] == 'China' else x['CountryRegion'], axis=1)
     data['Metric'] = metric
     data = data.dropna()
 
@@ -160,13 +162,13 @@ with st.expander("Metricas por pais"):
     def merge_data(x, y, z):
         xyz = pd.concat([x, y, z], ignore_index=True)
         xyz = xyz.dropna()
-        xyz = xyz.drop(['DELTA'], axis='columns')
+        xyz = xyz.drop(['Delta'], axis='columns')
         return xyz
 
 
     def grouping(df):
-        x = df[['CountryRegion', 'DATE', 'ACUMULATED', 'Metric']]
-        suma = x.groupby(['CountryRegion', 'DATE', 'Metric'], as_index=False).sum()
+        x = df[['CountryRegion', 'Date', 'Acumulado', 'Metric']]
+        suma = x.groupby(['CountryRegion', 'Date', 'Metric'], as_index=False).sum()
         return suma
 
 
@@ -181,9 +183,8 @@ with st.expander("Metricas por pais"):
 
     def final(df, df1):
         x = pd.merge(df, df1, on='CountryRegion', how='left')
-        x['tacumulado'] = x['ACUMULATED'].apply(lambda d: f'{round(d, 2):,}')
+        x['tacumulado'] = x['Acumulado'].apply(lambda d: f'{round(d, 2):,}')
         return x
-
 
     ######################################## Data Load ###############################################
 
@@ -215,7 +216,7 @@ with st.expander("Metricas por pais"):
     if cols in opciones:
         opciones_layer = cols
 
-    test = dfinal[(dfinal.Metric == opciones_layer) & (dfinal.DATE == starts)]
+    test = dfinal[(dfinal.Metric == opciones_layer) & (dfinal.Date == starts)]
 
     valores = {'Confirmed': 0.06, 'Recovered': 0.06, 'Deaths': 1.3}
 
@@ -236,7 +237,7 @@ with st.expander("Metricas por pais"):
         radius_max_pixels=50,
         line_width_min_pixels=1,
         get_position="coordinates",
-        get_radius='ACUMULATED',
+        get_radius='Acumulado',
         get_fill_color=['r','g','b'],
         get_line_color=[0, 0, 0],
     )
@@ -247,7 +248,7 @@ with st.expander("Metricas por pais"):
     # Render
 
     r = pdk.Deck(layers=[layer], initial_view_state=view_state,
-                 tooltip={"text": "{CountryRegion}\n{Date}\n{tacumulado}"}
+                 tooltip={"text": "{CountryRegion}\n{tacumulado}"}
                  # map_style="mapbox://styles/mapbox/light-v10"
                  )
 
